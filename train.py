@@ -47,7 +47,9 @@ class ModelArguments:
     load_path: Optional[str] = field(
         default="",
     )
-
+    post_selection: Optional[int] = field(
+        default=1
+    )
 @dataclass
 class DataArguments:
     low_res: Optional[int] = field(
@@ -110,6 +112,8 @@ data = DatasetDict(
 
 test_dataset = data["test"]
 context = [x[0] for x in test_data]
+ans = [x[1] for x in test_data]
+
 
 data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
 
@@ -154,6 +158,16 @@ if train_args.do_train:
 
 elif train_args.do_predict:
     predicted = trainer.predict(test_dataset)
+    if model_args.post_selection!=0:
+        num = model_args.post_selection
+        post_predictions = []
+        for i in range(num):
+            total_predictions = []
+            total_references = []
+            predicted = trainer.predict(test_dataset)
+            post_predictions.append(total_predictions)
+        
+        total_predcitions = post_selection(post_predictions, ans)
 
     logname = f'/home/zhangzekai/NLPDL_final/output/{model_type_name}'
     f = open(f'{logname}.log','w+')
@@ -165,3 +179,4 @@ elif train_args.do_predict:
         )
         f.write('}\n')
     f.close()
+
