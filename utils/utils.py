@@ -273,8 +273,27 @@ def compute_score(predictions, references, purify=0):
     print(result)
     return result
 
-
-
-
-
+def post_selection(preds, ans):
+    selected = []
+    pred_len = len(preds)
+    for i in range(len(preds[0])):
+        unselected = []
+        for j in range(pred_len):
+            unselected.append(preds[j][i])
+        ref = ans[i]
+        scores = [sacrebleu.compute(
+                        predictions=[x],
+                        references=[ref],
+                        tokenize='zh'
+                    )["score"] for x in unselected
+                    ]
+        max_score = 0
+        max_idx = 0
+        for j in range(pred_len):
+            if scores[j]>max_score:
+                max_score = scores[j]
+                max_idx = j
+        
+        selected.append(preds[max_idx][i])
     
+    return selected
