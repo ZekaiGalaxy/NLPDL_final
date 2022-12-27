@@ -63,7 +63,8 @@ An example is shown below
 
 ### Train & Eval ###
 ```
-python train.py your_training_args.json
+python train.py your_train_args.json
+python train.py your_eval_args.json
 ```
 
 
