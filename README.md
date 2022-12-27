@@ -3,7 +3,7 @@
 
 This project is based on pretrained model [**Randeng-BART-139M-QG-Chinese**](https://huggingface.co/IDEA-CCNL/Randeng-BART-139M-QG-Chinese). 
 
-In this project, I implemented ***answer separation*** in order to improve the performance of the QG model, as suggested by [**this paper**](https://arxiv.org/pdf/1809.02393.pdf). To further guide the model's decoding process, I introduced a ***post-selection*** method that selects the generated texts with the highest overlap with the given answer as the output. Upon analyzing the data, I discovered significant differences between the training and testing sets, so I employed a data augmentation technique called "***pseudo_q***" to reduce these gaps. 
+In this project, I implemented ***answer separation*** in order to improve the performance of the QG model, as suggested by [**this paper**](https://arxiv.org/pdf/1809.02393.pdf). To further guide the model's decoding process, I introduced a ***post-selection*** method that selects the generated texts with the highest overlap with the given answer as the output. Upon analyzing the data, I discovered significant differences between the training and testing sets, so I employed a data augmentation technique called "***pseudo_q***" to reduce these gaps. The report is available at [here](https://github.com/violets-blue/NLPDL_final/NLPDL_final_report.pdf)
 
 ## Run Model ##
 
