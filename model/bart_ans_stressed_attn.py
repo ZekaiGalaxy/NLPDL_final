@@ -1,5 +1,8 @@
 from transformers.models.bart.modeling_bart import *
 
+
+## Implementation of Stressed Attention ##
+
 class Ans_Stressed_Attention(BartAttention):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
 
@@ -75,6 +78,8 @@ class Ans_Stressed_Attention(BartAttention):
         attn_weights = attn_weights.view(bsz, self.num_heads, tgt_len, src_len).transpose(1,3)
         attn_weights_norm = attn_weights.mean(1).unsqueeze(1).repeat(1,src_len,1,1).clone().detach()
         # attn_weights[self.loc == 1] = attn_weights[self.loc == 1]*2
+        
+        # for the stressed area, attn_score += mean*lambda
         attn_weights[self.loc == 1] = attn_weights[self.loc == 1] + attn_weights_norm[self.loc == 1]*0.1
         attn_weights = attn_weights.transpose(1,3).view(bsz * self.num_heads, tgt_len, src_len)
 
@@ -137,6 +142,7 @@ class Ans_Stressed_Attention(BartAttention):
 def load_as_model():
     model = BartForConditionalGeneration.from_pretrained('/home/zhangzekai/NLPDL_final/pretrained_model/bart_zh')
     origin_layers = model.model.decoder.layers
+    # which layer to add stressed attn
     plug_in_layers = [0,1,2,3,4,5]
     idx  = 0
     for block in origin_layers:
