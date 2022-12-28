@@ -37,10 +37,10 @@ from model.bart_ans_stressed_attn import load_as_model
 class ModelArguments:
     model_type: Optional[str] = field(
         default="normal"
-    )  
+    )   # as
     ans_attn: Optional[str] = field(
         default='none',
-    ) # double, tri, norm
+    )   # double, tri, norm
     load_pretrain: Optional[int] = field(
         default=1
     )
@@ -49,7 +49,7 @@ class ModelArguments:
     )
     post_selection: Optional[int] = field(
         default=1
-    )
+    )   # 0 for no post selection, positive int for how many rounds of generation before selection
 @dataclass
 class DataArguments:
     low_res: Optional[int] = field(
@@ -57,17 +57,23 @@ class DataArguments:
     )
     aug: Optional[str] = field(
         default='none',
-    ) # squad, multi_q
+    )   # squad, pseudo_q, qa
     sep_ans: Optional[int] = field(
         default=1,
-    )
-
+    )   # whether to use ans separation
+        
+'''
+    parse
+'''
 parser = HfArgumentParser((ModelArguments, DataArguments, Seq2SeqTrainingArguments)) 
 if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
     model_args, data_args, train_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
 else:
     model_args, data_args, train_args = parser.parse_args_into_dataclasses()
 
+'''
+    get exp name
+'''
 expname = getname(train_args, model_args, data_args)
 train_args.output_dir+=f'/{expname}'
 train_args.run_name = f'{expname}'
@@ -77,8 +83,14 @@ model_type_name = "ASQG" if model_args.model_type == "as" else "QG"
 
 wandb.init(project="QG", name=expname)
 
+'''
+    get model, tokenizer
+'''
 model, tokenizer = load_model(model_args, train_args)
 
+'''
+    get data / aug? / low res?
+'''
 train_data = read_jsonl('/home/zhangzekai/NLPDL_final/data/qg_data/train.jsonl')
 train_len = len(train_data)
 test_data = read_jsonl('/home/zhangzekai/NLPDL_final/data/qg_data/test.jsonl')
@@ -89,12 +101,15 @@ if data_args.aug == 'squad':
     train_data += read_txt('/home/zhangzekai/NLPDL_final/data/squad_zh.txt')
 elif data_args.aug == 'qa':
     train_data += read_list('/home/zhangzekai/NLPDL_final/data/QA_aug.pkl')
-elif data_args.aug == 'multi_q':
+elif data_args.aug == 'pseudo_q':
     train_data += read_list('/home/zhangzekai/NLPDL_final/data/pseudo_q.pkl')
 
 train_raw_dataset = HDataset.from_dict({'question':[x[0] for x in train_data],'answer':[x[1] for x in train_data],'context':[x[2] for x in train_data]})
 test_raw_dataset = HDataset.from_dict({'question':[x[0] for x in test_data],'answer':[x[1] for x in test_data],'context':[x[2] for x in test_data]})
 
+'''
+    Preprocess
+'''
 if model_type_name == "ASQG":
     preprocess_function = preprocess_as_function
 else:
@@ -139,6 +154,9 @@ def compute_metrics(eval_preds):
     result = compute_score(predictions, references)
     return result
 
+'''
+    Trainer part
+'''
 trainer = MyTrainer(
     model,
     train_args,
@@ -159,6 +177,7 @@ if train_args.do_train:
 elif train_args.do_predict:
     predicted = trainer.predict(test_dataset)
     if model_args.post_selection!=0:
+        # several rounds of generation
         num = model_args.post_selection
         post_predictions = []
         for i in range(num):
