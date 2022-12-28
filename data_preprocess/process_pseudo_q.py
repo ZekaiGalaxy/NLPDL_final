@@ -20,7 +20,7 @@ def split_and_match(sent):
     splitted = []
     tem = []
 
-    # split
+    # split using different sep tokens
     for sep in ['，','。','！','？','：','；',' ',',','.']:
         tem = []
         for piece in pieces:
