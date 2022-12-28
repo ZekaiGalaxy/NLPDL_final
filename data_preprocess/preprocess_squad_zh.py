@@ -1,8 +1,10 @@
 import sys
 sys.path.append('/home/zhangzekai/NLPDL_final')
 from utils.utils import *
+
 original_data = load_json('/home/zhangzekai/NLPDL_final/data/squad_zh.json')['data']
 data=[]
+
 for paper in original_data:
     for para in paper['paragraphs']:
         context = para['context']
