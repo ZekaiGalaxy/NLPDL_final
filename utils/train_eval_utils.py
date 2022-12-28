@@ -19,6 +19,7 @@ import torch
 from transformers.models.bart.modeling_bart import *
 from model.bart_ans_stressed_attn import load_as_model
 
+# get exp name using args
 def getname(train_args, model_args, data_args):
     if model_args.model_type == "as":
         expname = 'ASQG'
@@ -36,6 +37,7 @@ def getname(train_args, model_args, data_args):
 
     return expname
 
+# load model : model_type, pretrained, load_path
 def load_model(model_args, train_args):
     tokenizer = AutoTokenizer.from_pretrained("/home/zhangzekai/NLPDL_final/pretrained_model/bart_zh")
     if model_args.model_type == "normal":
@@ -69,7 +71,8 @@ def preprocess_as_function(examples):
         a = examples['answer'][i]
         c = examples['context'][i]
         input = f"知识：{c} 回答:{a}"
-        label = f"问题：{q}"   
+        label = f"问题：{q}"  
+        # In which piece the answer appears
         loc0 = getloc(input,a)
         inputs.append(input)
         labels.append(label)
@@ -84,6 +87,7 @@ def preprocess_as_function(examples):
         if len(loc0)>0:
             if loc0[-1]>255:
                 loc0 = []
+        # mask which area should be stressed
         loc0_mask[i][loc0] = 1
 
     model_inputs = {}
@@ -94,6 +98,7 @@ def preprocess_as_function(examples):
 
     return model_inputs
 
+# sep: whether to apply ans separation
 def preprocess_normal_function_sep(examples):
 
     inputs = []
@@ -143,6 +148,7 @@ def preprocess_normal_function_nosep(examples):
 
     return model_inputs
 
+# Rewrite the Seq2SeqTrainer for Stressed Attn
 class ASSeq2SeqTrainer(Seq2SeqTrainer):
     def _remove_unused_columns(self, dataset: "datasets.Dataset", description: Optional[str] = None):
         if not self.args.remove_unused_columns:
@@ -188,7 +194,8 @@ class ASSeq2SeqTrainer(Seq2SeqTrainer):
             "max_length": 32,
             "num_beams": 4,
         }
-
+        
+        # modified here, add attributes of loc0_mask
         loc0_mask = inputs.pop("loc0_mask")
         for layer in model.model.decoder.layers:
             layer.encoder_attn.loc = loc0_mask.repeat(4,1)
